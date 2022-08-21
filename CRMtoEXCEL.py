@@ -33,6 +33,7 @@ positionOutRange = (539, 1)#
 positionPeakButton = (401,68)#
 positionBaseBelowButton = (279,65)#
 positionBaseAboveButton = (312,63)#
+isPath = False
 #座標----------------------------------------------------------------------------------------------------------------
 
 
@@ -172,6 +173,17 @@ def inputCheck():
     #入力ボタンがあるとTrueで返すので反転
     return not check
 
+def pathCheck():
+    global isPath
+    if isPath:
+        return
+    imagePath = r"./images/checkPath.png"
+    check = gui.locateOnScreen(imagePath, confidence = 0.9, grayscale = True)
+    if not check:
+        raise NameError("ファイルを開く -> ファイルの場所が「CRMProAuto」じゃないのでは??")
+    else:
+        isPath = True
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--path",action = "store_true", help="CRMtoEXCELフォルダ以外のファイルを実行したい時に使用して下さい。")
 args = parser.parse_args()
@@ -262,6 +274,7 @@ for (start, count) in zip(range(0, len(all_files),size),range(1,itr+1)):
 #ファイルを開くを押す
         ClickOpenFile()
         time.sleep(3)
+        pathCheck()
 
 #ファイル名入力
         WriteFileName(file_ab)

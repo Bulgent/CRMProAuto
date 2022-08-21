@@ -53,6 +53,7 @@ revalue = 15
 thrwidth = 12
 #ピークチェックできる状態か確認
 checkTimes = 2
+isPath = False
 #定義式--------------------------------------------------------------------------------------------------------------
 
 #座標----------------------------------------------------------------------------------------------------------------
@@ -461,7 +462,16 @@ def inputCheck():
     #Trueなら次に進んでよし
     return not check
 
-
+def pathCheck():
+    global isPath
+    if isPath:
+        return
+    imagePath = r"./images/checkPath.png"
+    check = gui.locateOnScreen(imagePath, confidence = 0.9, grayscale = True)
+    if not check:
+        raise NameError("ファイルを開く -> ファイルの場所が「CRMProAuto」じゃないのでは??")
+    else:
+        isPath = True
 
 #CH1, CH2, 7min, 9min, path
 def main_APC(_CH1, _CH2, _isCH2, _is9min, _isPath, _inputPath, _outputPath):
@@ -573,6 +583,7 @@ def main_APC(_CH1, _CH2, _isCH2, _is9min, _isPath, _inputPath, _outputPath):
             #ファイルを開くを押す
             ClickOpenFile()
             time.sleep(2.5)
+            pathCheck()
 
             #ファイル名入力
             pyperclip.copy(file_ab)

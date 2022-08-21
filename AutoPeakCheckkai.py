@@ -1,3 +1,4 @@
+from pydoc import ispath
 import cv2
 import csv
 import matplotlib.pyplot as plt
@@ -53,6 +54,7 @@ revalue = 15
 thrwidth = 12
 #ピークチェックできる状態か確認
 checkTimes = 2
+isPath = False
 #定義式--------------------------------------------------------------------------------------------------------------
 
 #座標----------------------------------------------------------------------------------------------------------------
@@ -461,6 +463,17 @@ def inputCheck():
     #Trueなら次に進んでよし
     return not check
 
+def pathCheck():
+    global isPath
+    if isPath:
+        return
+    imagePath = r"./images/checkPath.png"
+    check = gui.locateOnScreen(imagePath, confidence = 0.9, grayscale = True)
+    if not check:
+        raise NameError("ファイルを開く -> ファイルの場所が「CRMProAuto」じゃないのでは??")
+    else:
+        isPath = True
+
 #音声データ
 startsound = glob.glob(r"sound/start*")
 endsound = glob.glob(r"sound/end*")
@@ -566,6 +579,7 @@ for (start, count) in zip(range(0, len(all_files),size),range(1,itr+1)):
         #ファイルを開くを押す
         ClickOpenFile()
         time.sleep(2.5)
+        pathCheck()
 
         #ファイル名入力
         pyperclip.copy(file_ab)

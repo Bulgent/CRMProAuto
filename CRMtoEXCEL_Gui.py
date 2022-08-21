@@ -33,6 +33,7 @@ positionOutRange = (539, 1)#
 positionPeakButton = (401,68)#
 positionBaseBelowButton = (279,65)#
 positionBaseAboveButton = (312,63)#
+isPath = False
 #座標----------------------------------------------------------------------------------------------------------------
 
 
@@ -172,6 +173,17 @@ def inputCheck():
     #入力ボタンがあるとTrueで返すので反転
     return not check
 
+def pathCheck():
+    global isPath
+    if isPath:
+        return
+    imagePath = r"./images/checkPath.png"
+    check = gui.locateOnScreen(imagePath, confidence = 0.9, grayscale = True)
+    if not check:
+        raise NameError("ファイルを開く -> ファイルの場所が「CRMProAuto」じゃないのでは??")
+    else:
+        isPath = True
+
 def main_CtoE(_name, _isCH2, _isPath, _inputPath, _outputPath):
     global input_path, output_path, exname, all_files, file_ab
     parser = argparse.ArgumentParser()
@@ -266,6 +278,7 @@ def main_CtoE(_name, _isCH2, _isPath, _inputPath, _outputPath):
     #ファイルを開くを押す
             ClickOpenFile()
             time.sleep(3)
+            pathCheck()
 
     #ファイル名入力
             WriteFileName(file_ab)
