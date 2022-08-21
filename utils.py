@@ -85,7 +85,6 @@ def Save():
     gui.click(positionOverwrite)
 
 
-
 def getallcoodinate(image, isDebug=False):
     '''グラフの全座標取得
         ・image: スクリーンショット
@@ -96,24 +95,25 @@ def getallcoodinate(image, isDebug=False):
         ・cood: グラフの座標{x座標: y座標, ...}
     '''
     # 画像の読み込み
-    img = cv2.imread(image, cv2.IMREAD_COLOR)
+    img = cv2.imread(image, 0)
     # トリミング
     img = img[ymin:ymax, xmin:xmax]
     # 画像の範囲取得
     height, width, channels = img.shape[:3]
-    # 画像の読み込み
-    img = cv2.imread(image, 0)
-    # トリミング
-    img = img[ymin:ymax, xmin:xmax]
     # 画像の平滑化
-    blurs = cv2.blur(img, (3, 3))
+    blurs = cv2.blur(img, (blurLevel, blurLevel))
     if isDebug:
         cv2.imwrite("blur.png", blurs)
-    # グラフの端を白塗り・下に余白追加(輪郭をサーチするため)
-    blurs = cv2.line(blurs, (0, 0), (0, height), (255, 255, 255), 10)
-    blurs = cv2.line(blurs, (width, 0), (width, height), (255, 255, 255), 10)
+    # グラフの端を白塗り・下に余白追加(輪郭を捉えるため)
+    # 縦に白塗り(幅を足してない、x座標の変更はめんどくさいので...)
+    padding = 10
+    blurs = cv2.line(blurs, (0, 0), (0, height), (255, 255, 255), padding)
+    blurs = cv2.line(blurs, (width, 0), (width, height),
+                     (255, 255, 255), padding)
+    # 横に余白(高さはあくまで比較、値そのものを使うわけではない)
     blurs = cv2.copyMakeBorder(
         blurs, 50, 50, 0, 0, cv2.BORDER_CONSTANT, value=[255, 255, 255])
+
     if isDebug == True:
         cv2.imwrite("blur_cut.png", blurs)
     # 画像の2極化
@@ -124,7 +124,7 @@ def getallcoodinate(image, isDebug=False):
         im_bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     # 余計な次元(余計な輪郭)削除 (NumContours, 1, NumPoints) -> (NumContours, NumPoints)
     contours = [np.squeeze(cnt, axis=1) for cnt in contours]
-    conts = contours[0]
+    conts = contours[0]  # [[x,y],[x,y],....]
     # x座標範囲確認
     maxxc = 0
     minxc = 1000
@@ -135,16 +135,17 @@ def getallcoodinate(image, isDebug=False):
             minxc = cont[0]
     rangecheck = True
     # 輪郭が取得できてるか確認(できてなければ画像加工後リトライ)
-    if maxxc != width-5 and minxc != 5:
-        blurs = cv2.blur(img, (10, 10))
+    if maxxc != width-padding//2 and minxc != padding//2:
+        blurs = cv2.blur(img, (blurLevel, blurLevel))
         cv2.imwrite("autopeak_blur_re.png", blurs)
-        time.sleep(0.1)
-        blurs = cv2.imread("autopeak_blur_re.png")
+        # time.sleep(0.1)
+        # blurs = cv2.imread("autopeak_blur_re.png")
         rangecheck = False
-    # 足りてない部分に黒点追加して補完
+    # 足りてない部分に黒点追加して補完(補完箇所はグラフのベースライン, つまりピークで切れている場合には対応していない?)
         checkx = [False]*width
         for numx in range(1, width):
             for numy in range(1, height):
+                # もしそのx座標のどこかのピクセルが白でなければTrue
                 if blurs.item(numy, numx, 0) != 255 or blurs.item(numy, numx, 1) != 255 or blurs.item(numy, numx, 2) != 255:
                     checkx[numx-1] = True
                     break
@@ -152,14 +153,14 @@ def getallcoodinate(image, isDebug=False):
             if checkx[numx-1] == False:
                 blurs[height-1, numx] = [0, 0, 0]
                 blurs[height-2, numx] = [0, 0, 0]
-    # グラフの端を白塗り
-        blurs = cv2.line(blurs, (0, 0), (0, height), (255, 255, 255), 10)
+        # グラフの端を白塗り
+        blurs = cv2.line(blurs, (0, 0), (0, height), (255, 255, 255), padding)
         blurs = cv2.line(blurs, (width, 0), (width, height),
-                         (255, 255, 255), 10)
-    # グラフの端に余白追加
+                         (255, 255, 255), padding)
+        # グラフの端に余白追加
         blurs = cv2.copyMakeBorder(
             blurs, 50, 50, 0, 0, cv2.BORDER_CONSTANT, value=[255, 255, 255])
-    # 画像の2極化
+        # 画像の2極化
         cv2.imwrite("autopeak_blurs_re.png", blurs)
         blurs = cv2.imread("autopeak_blurs_re.png")
         retval, im_bw = cv2.threshold(blurs, 254, 255, cv2.THRESH_BINARY)
@@ -168,10 +169,10 @@ def getallcoodinate(image, isDebug=False):
         im_bw = cv2.cvtColor(im_bw, cv2.COLOR_BGR2GRAY)
         contours, hierarchy = cv2.findContours(
             im_bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-    # 余計な次元(余計な輪郭)削除 (NumContours, 1, NumPoints) -> (NumContours, NumPoints)
+        # 余計な次元(余計な輪郭)削除 (NumContours, 1, NumPoints) -> (NumContours, NumPoints)
         contours = [np.squeeze(cnt, axis=1) for cnt in contours]
         conts = contours[0]
-    # x座標範囲確認
+        # x座標範囲確認
         maxxc = 0
         minxc = 1000
         for cont in conts:
@@ -179,6 +180,7 @@ def getallcoodinate(image, isDebug=False):
                 maxxc = cont[0]
             if cont[0] <= minxc:
                 minxc = cont[0]
+
     # 一意に表示(Max)
     coodmax = {}
     for cont in conts:
@@ -261,20 +263,20 @@ def peakrange(maxxc, minxc, cood, modifiedpx, modifiedpy):
         if dist < thrtest:
             break
     thrh = (modifiedpy + (equi-1)*cood[thrhx])/equi
-# ピーク範囲(終点)
+    # ピーク範囲(終点)
     for peakx in range(modifiedpx, maxxc-searx + 1):
         dist = cood[peakx + searx]-cood[peakx]
         peakendx = peakx + searx
         if dist < heightthr and cood[peakx] > thrh:
             break
-# ピーク下限調査(始点)
+    # ピーク下限調査(始点)
     for peakx in range(modifiedpx, minxc + testx - 1):
         dist = cood[peakx - testx]-cood[peakx]
         thrhx = peakx - testx
         if dist < thrtest:
             break
     thrh = (modifiedpy + (equi-1)*cood[thrhx])/equi
-# ピーク範囲(始点)
+    # ピーク範囲(始点)
     for peakx in range(modifiedpx, minxc + searx, -1):
         dist = cood[peakx-searx]-cood[peakx]
         peakstax = peakx - searx
