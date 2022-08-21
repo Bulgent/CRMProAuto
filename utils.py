@@ -111,8 +111,6 @@ def getallcoodinate(image, isDebug = False):
     contours = [np.squeeze(cnt, axis=1) for cnt in contours]
     conts = contours[0]
     #x座標範囲確認
-    global maxxc
-    global minxc
     maxxc = 0
     minxc =1000
     for cont in conts:
@@ -164,7 +162,6 @@ def getallcoodinate(image, isDebug = False):
             if cont[0] <= minxc:
                 minxc = cont[0]
     #一意に表示(Max)
-    global cood
     coodmax = {}
     for cont in conts:
         if cont[0] in coodmax:
@@ -196,12 +193,12 @@ def getallcoodinate(image, isDebug = False):
         for coox in cood.keys():
             img[cood[coox],coox] = [0,0,255]
         cv2.imwrite("cood.png", img)
+    
+    return maxxc, minxc, cood
 
 #ピーク値の修正(トリミング画像内での)
-def modifypeak(k):
+def modifypeak(k, cood):
     k = round(k*uns+zes[0]-xmin)
-    global modifiedpx
-    global modifiedpy
     try:
         prepeak = [k, cood[k]]
 #修正範囲  
@@ -216,12 +213,10 @@ def modifypeak(k):
         for i,j in cood.items():
             if modifiedpy > j:
                 modifiedpy = j
+    return modifiedpx, modifiedpy
 
 #ピーク範囲の確定(トリミング画像内での)
-def peakrange():
-    global peakendx
-    global peakstax
-
+def peakrange(maxxc, minxc, cood, modifiedpx, modifiedpy):
 #ピーク下限調査(終点)
     for peakx in range(modifiedpx,maxxc-testx + 1):
         dist = cood[peakx + testx]-cood[peakx]
@@ -248,6 +243,7 @@ def peakrange():
         peakstax = peakx - searx
         if dist < heightthr and cood[peakx]>thrh:
             break
+    return peakendx, peakstax
 
 #ピークの矢印座標確認
 def peakcodinate(name1, name2):
@@ -279,10 +275,9 @@ def peakcodinate(name1, name2):
     max_idx = np.argmax(areas)
     max_area = areas[max_idx]
     result = cv2.moments(contours[max_idx])
-    global x
-    global y
     x = int(result["m10"]/result["m00"])
     y = int(result["m01"]/result["m00"])
+    return x, y
 
 #目視確認画像の作成
 def PasteImages(lst, photoNum_x, margin):
@@ -521,12 +516,13 @@ def movefiles_end(_output_path):
             shutil.move(file,f"{_output_path}")
 
 def pathCheck():
-    global isPath
+    isPath = False
     if isPath:
-        return
+        return 
     imagePath = r"./images/checkPath.png"
     check = gui.locateOnScreen(imagePath, confidence = 0.9, grayscale = True)
     if not check:
         raise NameError("ファイルを開く -> ファイルの場所が「CRMProAuto」じゃないのでは??")
     else:
         isPath = True
+    return isPath
