@@ -31,7 +31,7 @@ nis = [1335,438]
 #一秒の座標幅
 uns = (nis[0]-zes[0])/7
 #スクリーンショットのトリミング範囲
-xmin,xmax = 278,1333
+xmin,xmax = 300,1333
 ymin,ymax = 109,432
 #ピーク範囲(heighttr/searx = 傾き)
 #高さ閾値
