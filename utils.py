@@ -25,7 +25,6 @@ import random
 import datetime
 import math
 
-
 def CRMfront():
     '''CMRProを最前面に'''
     try:
@@ -327,6 +326,56 @@ def peakcodinate(name1, name2):
     y = int(result["m01"]/result["m00"])
     return x, y
 
+def drawPeak(modifiedpx, peakendx, peakstax):
+    '''ピークとベースラインを描く
+    modifiedpx: 修正後ピークx座標
+    peakendx: ピークの終わり座標(local)
+    peakstax: ピークの始まり座標(local)
+    '''
+    #エラー処理はメインで
+    ###ピークをつける###
+    gui.click(positionPeakButton)
+    gui.moveTo(modifiedpx + xmin,zes[1]-20)
+    time.sleep(1)
+    gui.doubleClick()
+    #スクリーンショット
+    gui.moveTo(positionOutRange)
+    ImageGrab.grab().save("autopeak_before1.png")
+
+    ###ベーススタート/エンド###
+    gui.click(positionBaseBelowButton)
+    time.sleep(0.5)
+    #スクリーンショット
+    gui.moveTo(positionOutRange)
+    ImageGrab.grab().save("autopeak_after1.png")
+    #ピーク座標矢印の検出
+    x, y = peakcodinate("autopeak_before1.png","autopeak_after1.png")
+    #カーソルの移動
+    gui.moveTo(x + xmin, y + ymin)
+    time.sleep(2)
+    gui.dragTo(peakendx + xmin, y+ymin, 0.75)
+    gui.moveTo(x + xmin, y + ymin - 3)
+    gui.dragTo(peakstax + xmin, y+ymin, 0.75)
+    #スクリーンショット
+    gui.click(positionPeakButton)
+    gui.moveTo(positionOutRange)
+    ImageGrab.grab().save("autopeak_before2.png")
+
+    ###ピークスタート/エンド###
+    gui.click(positionBaseAboveButton)
+    time.sleep(0.5)
+    #スクリーンショット
+    gui.moveTo(positionOutRange)
+    ImageGrab.grab().save("autopeak_after2.png")
+    #ピーク座標の検出#
+    x, y = peakcodinate("autopeak_before2.png","autopeak_after2.png")
+    #カーソルの移動
+    gui.moveTo(x + xmin, y + ymin)
+    time.sleep(2)
+    gui.dragTo(peakendx + xmin, y+ymin, 0.75)
+    gui.moveTo(x + xmin, y + ymin + 3)
+    gui.dragTo(peakstax + xmin, y+ymin, 0.75)
+
 
 def PasteImages(lst, photoNum_x, margin):
     '''目視確認画像の作成
@@ -454,6 +503,10 @@ def CreateCheckPhotos(isCH4s=True):
     ManageCheckPhotos("Channel1", r".\checkphoto_1_*")
     if isCH4s:
         ManageCheckPhotos("Channel2", r".\checkphoto_2_*")
+
+#---------------------------
+#以下CRMtoEXCEL
+#---------------------------
 
 
 def copyfiles_start(_inputPath):
