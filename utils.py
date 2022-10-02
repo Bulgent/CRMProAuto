@@ -84,7 +84,7 @@ def Save():
     gui.click(positionOverwrite)
 
 
-def getallcoodinate(image, isDebug=False):
+def getAllCoodinate(image, isDebug=False):
     '''グラフの全座標取得
         ・image: スクリーンショット
         ・isDebug: デバッグモードかどうか(処理過程の画像が出力される)
