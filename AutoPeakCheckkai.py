@@ -413,9 +413,9 @@ def ManageCheckPhotos(name, path):
 
     #貼り付け最大枚数より多い時
     else:
-        itr = len(lst) // (photoNum_x * photoNum_y_max)
+        itr = -1*(-1*len(lst) // (photoNum_x * photoNum_y_max))
         itr_con = photoNum_x * photoNum_y_max
-        for i in range(itr+1):
+        for i in range(itr):
             fin = min((i+1)*itr_con, len(lst))
             lst_image = lst[i*itr_con:fin]
             im = PasteImages(lst_image, photoNum_x, margin)
